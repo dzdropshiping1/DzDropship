@@ -1,20 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { 
   ShieldCheck, 
   TrendingUp, 
-  ShoppingBag, 
   Sparkles, 
   ArrowRight, 
   CreditCard, 
   Percent, 
   CheckCircle2, 
   Truck,
-  HelpCircle,
-  Layers,
-  ArrowUpRight,
   ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
@@ -24,7 +19,6 @@ interface LandingClientProps {
 }
 
 export default function LandingClient({ initialUser }: LandingClientProps) {
-  const router = useRouter();
   const [user] = useState(initialUser);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
@@ -63,9 +57,6 @@ export default function LandingClient({ initialUser }: LandingClientProps) {
       overflowX: 'hidden',
       position: 'relative'
     }}>
-      {/* Import Cairo & Outfit fonts */}
-      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-
       {/* Ambient glowing blobs */}
       <div className="glow-orb glow-orb-1" />
       <div className="glow-orb glow-orb-2" />

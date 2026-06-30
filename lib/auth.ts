@@ -29,7 +29,7 @@ export function verifyPassword(password: string, stored: string): boolean {
     if (!salt || !hash) return false;
     const verifyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
     return hash === verifyHash;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -78,7 +78,7 @@ export function verifySession(token: string): SessionPayload | null {
     }
 
     return payload;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -92,7 +92,7 @@ export async function getCurrentUser(): Promise<SessionPayload | null> {
     const sessionCookie = cookieStore.get('session');
     if (!sessionCookie || !sessionCookie.value) return null;
     return verifySession(sessionCookie.value);
-  } catch (err) {
+  } catch {
     return null;
   }
 }

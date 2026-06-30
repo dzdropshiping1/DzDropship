@@ -2,7 +2,6 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { 
   TrendingUp, 
-  ShoppingBag, 
   DollarSign, 
   Clock, 
   Truck, 

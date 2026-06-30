@@ -48,13 +48,8 @@ export default function ReconcilePage() {
     codReconciledCount: number;
   } | null>(null);
 
-  useEffect(() => {
-    fetchReconcileData();
-  }, []);
-
   const fetchReconcileData = async () => {
     try {
-      setLoading(true);
       const response = await fetch('/api/sofizpay/sync');
       if (response.ok) {
         const data = await response.json();
@@ -67,6 +62,12 @@ export default function ReconcilePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void fetchReconcileData();
+    });
+  }, []);
 
   const handleSync = async () => {
     setSyncing(true);
