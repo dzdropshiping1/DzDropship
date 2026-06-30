@@ -12,18 +12,19 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import type { Order } from '@prisma/client';
+import type { ReactNode } from 'react';
 
 interface VerifyClientProps {
   order: Order;
   initialStatus: string;
-  initialDetails?: any;
+  initialDetails?: Record<string, unknown> | null;
 }
 
 export default function VerifyClient({ order, initialStatus, initialDetails }: VerifyClientProps) {
   const [status, setStatus] = useState<string>(initialStatus);
   const [isChecking, setIsChecking] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [txDetails, setTxDetails] = useState<any>(initialDetails || null);
+  const [txDetails, setTxDetails] = useState<Record<string, unknown> | null>(initialDetails || null);
 
   const checkPaymentStatus = useCallback(async () => {
     if (!order.sofizPayPaymentId || isChecking) return;
@@ -49,7 +50,10 @@ export default function VerifyClient({ order, initialStatus, initialDetails }: V
         setStatus(newStatus);
         
         // Extract raw details
-        const { success, status: statusKey, order: orderKey, ...details } = data;
+        const details = { ...data };
+        delete details.success;
+        delete details.status;
+        delete details.order;
         setTxDetails(details);
       }
     } catch (err) {
@@ -72,9 +76,24 @@ export default function VerifyClient({ order, initialStatus, initialDetails }: V
   }, [status, order.sofizPayPaymentId, checkPaymentStatus]);
 
   const total = order.sellingPriceDzd + order.shippingPriceDzd;
+  const stringifyDetail = (value: unknown) => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    return JSON.stringify(value);
+  };
 
   // Determine icon and color schemes
-  const getStatusConfig = () => {
+  const getStatusConfig = (): {
+    icon: ReactNode;
+    title: string;
+    arTitle: string;
+    desc: string;
+    arDesc: string;
+    badgeClass: string;
+    borderColor: string;
+    gradient: string;
+  } => {
     switch (status) {
       case 'PAID':
       case 'PARTIALLY_PAID':
@@ -114,6 +133,10 @@ export default function VerifyClient({ order, initialStatus, initialDetails }: V
   };
 
   const config = getStatusConfig();
+  const rejectionReason = stringifyDetail(
+    txDetails?.actionCodeDescription || txDetails?.respCode_desc || txDetails?.errorMessage
+  );
+  const responseCode = stringifyDetail(txDetails?.respCode);
 
   return (
     <div style={{
@@ -240,7 +263,7 @@ export default function VerifyClient({ order, initialStatus, initialDetails }: V
         {config.arDesc}
       </p>
 
-      {status === 'FAILED' && txDetails && (txDetails.actionCodeDescription || txDetails.errorMessage) && (
+      {status === 'FAILED' && txDetails && rejectionReason && (
         <div style={{
           width: '100%',
           padding: '14px',
@@ -260,11 +283,11 @@ export default function VerifyClient({ order, initialStatus, initialDetails }: V
             <span>Rejection Reason / سبب الرفض:</span>
           </div>
           <p style={{ color: 'var(--text-primary)', fontSize: '13px', lineHeight: '1.4' }}>
-            {txDetails.actionCodeDescription || txDetails.respCode_desc || txDetails.errorMessage}
+            {rejectionReason}
           </p>
-          {txDetails.respCode && (
+          {responseCode && (
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              Response Code / رمز الاستجابة: {txDetails.respCode}
+              Response Code / رمز الاستجابة: {responseCode}
             </span>
           )}
         </div>

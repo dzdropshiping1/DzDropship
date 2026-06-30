@@ -1,5 +1,19 @@
 import SofizPaySDK from 'sofizpay-sdk-js';
 
+interface SofizPayStatusResponse {
+  success?: boolean;
+  data?: {
+    orderStatus?: unknown;
+    respCode?: unknown;
+    errorMessage?: unknown;
+    status?: unknown;
+  } & Record<string, unknown>;
+}
+
+interface SofizPaySDKWithStatus {
+  checkCIBStatus(paymentId: string): Promise<SofizPayStatusResponse>;
+}
+
 export interface SofizPayCustomer {
   email?: string;
   phone: string;
@@ -73,10 +87,10 @@ class PaymentsService {
   /**
    * Retrieves CIB/Dahabia payment status using the official SofizPay SDK's checkCIBStatus.
    */
-   async retrieve(paymentId: string): Promise<{ id: string; status: 'PENDING' | 'PAID' | 'FAILED'; rawData?: any }> {
+   async retrieve(paymentId: string): Promise<{ id: string; status: 'PENDING' | 'PAID' | 'FAILED'; rawData?: Record<string, unknown> }> {
     try {
       // Cast is used to access checkCIBStatus bypassing incorrect TS typings in package
-      const response = await (this.sdkInstance as any).checkCIBStatus(paymentId);
+      const response = await (this.sdkInstance as unknown as SofizPaySDKWithStatus).checkCIBStatus(paymentId);
       
       if (response.success && response.data) {
         const orderStatus = response.data.orderStatus !== undefined ? Number(response.data.orderStatus) : null;
@@ -124,7 +138,7 @@ class PaymentsService {
 export class SofizPay {
   public payments: PaymentsService;
 
-  constructor(config?: { apiKey?: string }) {
+  constructor() {
     this.payments = new PaymentsService();
   }
 }

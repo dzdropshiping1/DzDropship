@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
-  ShieldCheck, 
   Sparkles, 
   ArrowRight, 
   Lock, 
@@ -29,16 +28,6 @@ export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  // Sync tab state if query parameter changes
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'register') {
-      setActiveTab('register');
-    } else if (tabParam === 'login') {
-      setActiveTab('login');
-    }
-  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,8 +58,8 @@ export default function LoginClient() {
         router.refresh();
       }, 1000);
 
-    } catch (err: any) {
-      setError(err.message || 'حدث خطأ في الاتصال / Connection error');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'حدث خطأ في الاتصال / Connection error');
     } finally {
       setIsLoading(false);
     }
@@ -90,9 +79,6 @@ export default function LoginClient() {
       color: 'var(--text-primary)',
       fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Import Cairo & Outfit fonts */}
-      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-
       <style dangerouslySetInnerHTML={{ __html: `
         * {
           font-family: 'Cairo', 'Outfit', sans-serif !important;

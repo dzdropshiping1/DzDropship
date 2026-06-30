@@ -25,7 +25,7 @@ export default async function VerifyPage({ searchParams }: PageProps) {
   }
 
   let initialStatus = order.paymentStatus;
-  let initialDetails: any = null;
+  let initialDetails: Record<string, unknown> | null = null;
 
   // Perform initial server-side check if transaction ID is available
   if (order.sofizPayPaymentId && (order.paymentStatus === 'PENDING' || order.paymentStatus === 'FAILED')) {

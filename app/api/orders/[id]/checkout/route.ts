@@ -4,16 +4,23 @@ import { SofizPay } from '@/lib/sofizpay';
 
 const sofizpay = new SofizPay();
 
+interface CheckoutRequestBody {
+  paymentMethod?: string;
+  onlineAmount?: number | string;
+  paymentMethodDetails?: string;
+  forceOfflineComplete?: boolean;
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params; // CUID or transaction ID
-    let body: any = {};
+    let body: CheckoutRequestBody = {};
     try {
       body = await request.json();
-    } catch (err) {
+    } catch {
       console.warn('Empty or invalid JSON body received during checkout');
     }
     const { paymentMethod, onlineAmount, paymentMethodDetails, forceOfflineComplete } = body;

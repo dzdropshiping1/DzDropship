@@ -38,13 +38,8 @@ export default function CodBridgePage() {
   const [messageOrder, setMessageOrder] = useState<Order | null>(null);
   const [copiedMessage, setCopiedMessage] = useState(false);
 
-  useEffect(() => {
-    fetchBridgeOrders();
-  }, []);
-
   const fetchBridgeOrders = async () => {
     try {
-      setLoading(true);
       const response = await fetch('/api/orders');
       if (response.ok) {
         const data = await response.json();
@@ -58,6 +53,12 @@ export default function CodBridgePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void fetchBridgeOrders();
+    });
+  }, []);
 
   const copyLink = (id: string) => {
     const absoluteUrl = window.location.origin + `/checkout/${id}`;

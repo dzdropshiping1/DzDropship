@@ -2,14 +2,12 @@
 
 import { useState } from 'react';
 import { 
-  ShieldCheck, 
   CreditCard, 
   Lock, 
   ArrowRight, 
   CheckCircle, 
   Smartphone,
   Truck,
-  Sparkles,
   ChevronLeft
 } from 'lucide-react';
 import type { Order } from '@prisma/client';

@@ -3,15 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  ShoppingBag, 
   Search, 
   Trash2, 
-  Filter, 
-  Link as LinkIcon, 
   ArrowUpRight,
-  Clipboard,
-  CheckCircle,
-  Truck
+  Clipboard
 } from 'lucide-react';
 
 interface Order {
@@ -45,13 +40,8 @@ export default function OrdersPage() {
   const [filterShipping, setFilterShipping] = useState('ALL');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
   const fetchOrders = async () => {
     try {
-      setLoading(true);
       const response = await fetch('/api/orders');
       if (response.ok) {
         const data = await response.json();
@@ -63,6 +53,12 @@ export default function OrdersPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void fetchOrders();
+    });
+  }, []);
 
   const handleUpdateStatus = async (id: string, field: 'shippingStatus' | 'paymentStatus' | 'trackingCode', value: string) => {
     try {
