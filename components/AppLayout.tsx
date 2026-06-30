@@ -5,9 +5,9 @@ import Sidebar from './Sidebar';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isCheckout = pathname.startsWith('/checkout/');
+  const isNoSidebar = pathname === '/' || pathname === '/login' || pathname.startsWith('/checkout/');
 
-  if (isCheckout) {
+  if (isNoSidebar) {
     return <div style={{ minHeight: '100vh', width: '100%' }}>{children}</div>;
   }
 

@@ -1,13 +1,24 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getCurrentUser } from '@/lib/auth';
 
 export async function GET() {
   try {
-    const logs = await prisma.paymentLog.findMany({
-      orderBy: { createdAt: 'desc' },
+    const session = await getCurrentUser();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const activeOrders = await prisma.order.findMany({
+      where: { userId: session.userId }
     });
 
-    const activeOrders = await prisma.order.findMany();
+    const orderIds = activeOrders.map(o => o.id);
+
+    const logs = await prisma.paymentLog.findMany({
+      where: { orderId: { in: orderIds } },
+      orderBy: { createdAt: 'desc' },
+    });
 
     // Computations
     const onlineReconciled = logs
@@ -43,9 +54,24 @@ export async function GET() {
 
 export async function POST() {
   try {
+    const session = await getCurrentUser();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const activeOrders = await prisma.order.findMany({
+      where: { userId: session.userId }
+    });
+
+    const orderIds = activeOrders.map(o => o.id);
+
     // 1. Reconcile online payments (mark pending logs as reconciled)
     const pendingLogs = await prisma.paymentLog.findMany({
-      where: { reconciled: false, status: 'COMPLETED' },
+      where: { 
+        reconciled: false, 
+        status: 'COMPLETED',
+        orderId: { in: orderIds }
+      },
     });
 
     for (const log of pendingLogs) {
@@ -59,11 +85,9 @@ export async function POST() {
     }
 
     // 2. Reconcile COD cash collections:
-    // For orders that are DELIVERED and have pending COD payments, we simulate
-    // syncing courier status (like Yalidine) and auto-updating payment to PAID
-    // since the courier has collected and transferred the cash.
     const deliveredCodOrders = await prisma.order.findMany({
       where: {
+        userId: session.userId,
         shippingStatus: 'DELIVERED',
         paymentStatus: { in: ['PENDING', 'PARTIALLY_PAID'] },
         codAmount: { gt: 0 }

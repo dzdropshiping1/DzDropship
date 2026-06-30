@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getCurrentUser } from '@/lib/auth';
 
 export async function GET() {
   try {
+    const session = await getCurrentUser();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const orders = await prisma.order.findMany({
+      where: { userId: session.userId },
       orderBy: { createdAt: 'desc' },
     });
     return NextResponse.json(orders);
@@ -15,6 +22,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await getCurrentUser();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const {
       customerName,
@@ -53,6 +65,7 @@ export async function POST(request: Request) {
         paymentStatus: 'PENDING',
         shippingStatus: 'PENDING',
         sofizPayPaymentId: null, // Will be filled once customer pays
+        userId: session.userId, // Link order to active user
       },
     });
 

@@ -14,147 +14,22 @@ import {
   Link as LinkIcon,
   ArrowUpRight
 } from 'lucide-react';
+import { getCurrentUser } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
-async function getDashboardData() {
-  let orders = await prisma.order.findMany({
+async function getDashboardData(userId: string) {
+  return await prisma.order.findMany({
+    where: { userId },
     orderBy: { createdAt: 'desc' }
   });
-
-  // Auto-seed if database is empty so the reseller can experience the app immediately
-  if (orders.length === 0) {
-    const mockOrders = [
-      {
-        customerName: "Mohamed Benali",
-        customerPhone: "0550123456",
-        customerWilaya: "Alger",
-        customerAddress: "Didouche Mourad, Alger Center",
-        productName: "Wireless Earbuds Pro",
-        source: "ALIEXPRESS",
-        costPriceDzd: 1800,
-        sellingPriceDzd: 4500,
-        shippingPriceDzd: 600,
-        paymentMethod: "SPLIT",
-        onlineAmount: 600,
-        codAmount: 4500,
-        paymentStatus: "PARTIALLY_PAID",
-        shippingStatus: "SHIPPED",
-        sofizPayPaymentId: "SP_MOCK_1",
-        sofizPayCheckoutUrl: "/checkout/SP_MOCK_1",
-      },
-      {
-        customerName: "Fatima Zohra",
-        customerPhone: "0661987654",
-        customerWilaya: "Oran",
-        customerAddress: "Akid Lotfi, Oran",
-        productName: "Smart Watch Series 9",
-        source: "ALIEXPRESS",
-        costPriceDzd: 3500,
-        sellingPriceDzd: 8900,
-        shippingPriceDzd: 800,
-        paymentMethod: "ONLINE",
-        onlineAmount: 9700,
-        codAmount: 0,
-        paymentStatus: "PAID",
-        shippingStatus: "DELIVERED",
-        sofizPayPaymentId: "SP_MOCK_2",
-        sofizPayCheckoutUrl: "/checkout/SP_MOCK_2",
-      },
-      {
-        customerName: "Anis Rahmani",
-        customerPhone: "0772345678",
-        customerWilaya: "Constantine",
-        customerAddress: "Sidi Mabrouk, Constantine",
-        productName: "Leather Backpack",
-        source: "LOCAL_WHOLESALER",
-        costPriceDzd: 2500,
-        sellingPriceDzd: 6000,
-        shippingPriceDzd: 700,
-        paymentMethod: "COD",
-        onlineAmount: 0,
-        codAmount: 6700,
-        paymentStatus: "PENDING",
-        shippingStatus: "PENDING",
-      },
-      {
-        customerName: "Amine Khelil",
-        customerPhone: "0554112233",
-        customerWilaya: "Setif",
-        customerAddress: "Boulevard 1er Novembre, Setif",
-        productName: "Ergonomic Office Mouse",
-        source: "LOCAL_WHOLESALER",
-        costPriceDzd: 1200,
-        sellingPriceDzd: 3200,
-        shippingPriceDzd: 600,
-        paymentMethod: "COD",
-        onlineAmount: 0,
-        codAmount: 3800,
-        paymentStatus: "PAID",
-        shippingStatus: "DELIVERED",
-      },
-      {
-        customerName: "Karima Bensaad",
-        customerPhone: "0667445566",
-        customerWilaya: "Blida",
-        customerAddress: "Bab Sebt, Blida",
-        productName: "Mini Projector 4K",
-        source: "ALIEXPRESS",
-        costPriceDzd: 8000,
-        sellingPriceDzd: 18500,
-        shippingPriceDzd: 600,
-        paymentMethod: "SPLIT",
-        onlineAmount: 1000,
-        codAmount: 18100,
-        paymentStatus: "PENDING",
-        shippingStatus: "PENDING",
-        sofizPayPaymentId: "SP_MOCK_5",
-        sofizPayCheckoutUrl: "/checkout/SP_MOCK_5",
-      }
-    ];
-
-    for (const mo of mockOrders) {
-      await prisma.order.create({ data: mo });
-    }
-    
-    // Create seed payment logs
-    const watchOrder = await prisma.order.findFirst({ where: { sofizPayPaymentId: "SP_MOCK_2" } });
-    if (watchOrder) {
-      await prisma.paymentLog.create({
-        data: {
-          orderId: watchOrder.id,
-          sofizPayId: "SP_MOCK_2",
-          amount: 9700,
-          status: "COMPLETED",
-          paymentMethod: "EDAHABIYA",
-          reconciled: true,
-          reconciledAt: new Date()
-        }
-      });
-    }
-
-    const earbudsOrder = await prisma.order.findFirst({ where: { sofizPayPaymentId: "SP_MOCK_1" } });
-    if (earbudsOrder) {
-      await prisma.paymentLog.create({
-        data: {
-          orderId: earbudsOrder.id,
-          sofizPayId: "SP_MOCK_1",
-          amount: 600,
-          status: "COMPLETED",
-          paymentMethod: "CIB",
-          reconciled: false
-        }
-      });
-    }
-
-    orders = await prisma.order.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
-  }
-
-  return orders;
 }
 
 export default async function DashboardPage() {
-  const orders = await getDashboardData();
+  const session = await getCurrentUser();
+  if (!session) {
+    redirect('/login');
+  }
+  const orders = await getDashboardData(session.userId);
 
   // Statistics Computations
   const activeOrders = orders.filter(o => o.shippingStatus !== 'CANCELLED' && o.shippingStatus !== 'RETURNED');
